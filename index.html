@@ -34,6 +34,7 @@
   </div>
   <button onclick="copyTable()">📋 Copy Table</button>
   <div id="pdfRenderTarget"></div>
+
   <script>
     const chatbox = document.getElementById("chatbox");
     const spinner = document.getElementById("loadingSpinner");
@@ -42,9 +43,12 @@
     function appendMessage(text, sender) {
       const msg = document.createElement("div");
       msg.className = sender === "user" ? "user-msg" : "bot-msg";
+
       if (sender === "bot") {
         const rendered = marked.parse(text);
         msg.innerHTML = rendered;
+
+        // Save table for copying
         if (rendered.includes("<table>")) {
           pdfRenderTarget.innerHTML = "";
           const tempDiv = document.createElement("div");
@@ -55,6 +59,7 @@
       } else {
         msg.textContent = text;
       }
+
       chatbox.appendChild(msg);
       chatbox.scrollTop = chatbox.scrollHeight;
     }
@@ -63,15 +68,22 @@
       const input = document.getElementById("input");
       const message = input.value.trim();
       if (!message) return;
+
       appendMessage(message, "user");
       input.value = "";
       spinner.style.display = "inline-block";
+
       try {
         const response = await fetch("https://travel-assistant-yl1h.onrender.com/chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
           body: JSON.stringify({ message: message })
         });
+
         const data = await response.json();
         spinner.style.display = "none";
         appendMessage(data.reply || "⚠️ No reply received.", "bot");
